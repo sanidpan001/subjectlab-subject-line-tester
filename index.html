@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SubjectLab — Free Email Subject Line Tester & Spam Word Checker</title>
+<meta name="description" content="SubjectLab is a free email subject line tester with transparent itemized scoring, A/B/C variant comparison, exact Gmail/Outlook/Apple truncation previews, and a built-in spam word checker. No signup needed.">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#f8fafc; }
+  .lab-grid { background-image: radial-gradient(#e2e8f0 1px, transparent 1px); background-size: 22px 22px; }
+  .score-ring { transform: rotate(-90deg); }
+  .spam-hit { background:#fecdd3; color:#9f1239; border-radius:4px; padding:0 3px; font-weight:600; }
+  .chip { cursor:pointer; transition: all .15s; }
+  .chip:hover { transform: translateY(-1px); }
+  .trunc-bar { height:10px; border-radius:9999px; }
+  details.faq summary::-webkit-details-marker { display:none; }
+  details.faq[open] .faq-plus { transform: rotate(45deg); }
+  .faq-plus { transition: transform .2s; }
+  .flask-bubble { animation: floaty 4s ease-in-out infinite; }
+  @keyframes floaty { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-8px);} }
+</style>
+</head>
+<body class="text-slate-800 antialiased">
+
+<!-- Sticky header -->
+<header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2">
+      <span class="flask-bubble inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-pink-500 text-white text-xl">⚗</span>
+      <span class="text-xl font-extrabold tracking-tight">Subject<span class="text-indigo-600">Lab</span></span>
+    </a>
+    <nav class="text-sm font-medium">
+      <a href="#top" class="px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">Home</a>
+      <a href="https://fixoraa.tech" class="px-3 py-2 rounded-lg hover:bg-slate-100 text-slate-700">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="lab-grid border-b border-slate-200">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14 text-center">
+    <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-3 py-1.5 mb-4">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Unlimited Free Usage — no signup, no paywall
+    </span>
+    <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+      Email Subject Line <span class="bg-gradient-to-r from-indigo-600 to-pink-500 bg-clip-text text-transparent">Tester</span>
+    </h1>
+    <p class="mt-3 max-w-2xl mx-auto text-slate-600">Score up to 3 variants side by side, see exactly where Gmail, Outlook and Apple Mail cut them off, and scrub spam-trigger words before you hit send.</p>
+  </div>
+</section>
+
+<!-- TOOL -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="grid lg:grid-cols-3 gap-5" id="variant-grid">
+    <div class="bg-white rounded-2xl border-2 border-indigo-200 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-bold">A</span>
+        <span class="text-xs text-slate-400"><span id="count-a">0</span> chars</span>
+      </div>
+      <label for="variant-a" class="sr-only">Variant A subject line</label>
+      <textarea id="variant-a" rows="3" maxlength="200" placeholder="Type variant A… e.g. Your proven 7-step morning routine" class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none p-3 text-sm"></textarea>
+      <button data-insert-target="variant-a" class="insert-here mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800">◎ Use this slot for word-chip inserts</button>
+    </div>
+    <div class="bg-white rounded-2xl border-2 border-pink-200 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-pink-500 text-white font-bold">B</span>
+        <span class="text-xs text-slate-400"><span id="count-b">0</span> chars</span>
+      </div>
+      <label for="variant-b" class="sr-only">Variant B subject line</label>
+      <textarea id="variant-b" rows="3" maxlength="200" placeholder="Type variant B… e.g. 7 morning habits that changed my life" class="w-full rounded-xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-100 outline-none p-3 text-sm"></textarea>
+      <button data-insert-target="variant-b" class="insert-here mt-2 text-xs font-semibold text-pink-600 hover:text-pink-800">◎ Use this slot for word-chip inserts</button>
+    </div>
+    <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-500 text-white font-bold">C</span>
+        <span class="text-xs text-slate-400"><span id="count-c">0</span> chars</span>
+      </div>
+      <label for="variant-c" class="sr-only">Variant C subject line</label>
+      <textarea id="variant-c" rows="3" maxlength="200" placeholder="Type variant C… (optional)" class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none p-3 text-sm"></textarea>
+      <button data-insert-target="variant-c" class="insert-here mt-2 text-xs font-semibold text-slate-500 hover:text-slate-700">◎ Use this slot for word-chip inserts</button>
+    </div>
+  </div>
+
+  <div class="text-center mt-6">
+    <button id="analyze-btn" class="px-8 py-3.5 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-indigo-600 to-pink-500 shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition">🔬 Analyze Variants</button>
+    <button id="sample-btn" class="ml-3 px-5 py-3 rounded-2xl font-semibold text-sm border border-slate-300 bg-white hover:bg-slate-50 transition">Load sample</button>
+  </div>
+
+  <!-- Results -->
+  <section id="results" class="mt-8 hidden">
+    <h2 class="text-2xl font-extrabold text-slate-900 mb-4">Results — ranked best first</h2>
+    <div id="ranked-list" class="space-y-5"></div>
+  </section>
+
+  <!-- Word lexicon lab -->
+  <section class="mt-10 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+    <h2 class="text-xl font-extrabold text-slate-900">Word Lexicon Lab</h2>
+    <p class="text-sm text-slate-500 mt-1">Pick the active slot above, then click a word to insert it into that subject line.</p>
+    <div class="flex gap-2 mt-4" role="tablist">
+      <button class="lex-tab px-4 py-2 rounded-full text-sm font-semibold bg-indigo-600 text-white" data-lex="power" role="tab">⚡ Power words</button>
+      <button class="lex-tab px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-lex="curiosity" role="tab">🔍 Curiosity words</button>
+      <button class="lex-tab px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600" data-lex="urgency" role="tab">⏰ Urgency words</button>
+    </div>
+    <div id="lexicon-chips" class="flex flex-wrap gap-2 mt-4"></div>
+    <p class="text-xs text-slate-400 mt-3">Active slot: <span id="active-slot" class="font-semibold text-indigo-600">variant-a</span></p>
+  </section>
+
+  <!-- Truncation reference -->
+  <section class="mt-8 bg-gradient-to-br from-indigo-50 to-pink-50 rounded-2xl border border-indigo-100 p-6">
+    <h2 class="text-xl font-extrabold text-slate-900">Inbox truncation limits we test against</h2>
+    <div id="trunc-rules" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 text-sm"></div>
+  </section>
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+    </div>
+  </div>
+</div>
+
+<!-- SEO ARTICLE -->
+<article id="seo-article" class="mx-auto max-w-3xl px-4 sm:px-6 py-10 text-slate-700 leading-relaxed">
+  <h2 class="text-3xl font-extrabold text-slate-900 mb-6">The Complete Guide to Testing Email Subject Lines Before You Send</h2>
+
+  <p class="mb-4">Your subject line is the single hardest-working sentence in your entire email. Industry data consistently shows that roughly a third of recipients decide whether to open an email based on the subject line alone, and a meaningful share report messages as spam because of it. That is why a proper <strong>email subject line tester</strong> belongs in every sender's workflow — not as a gimmick, but as quality control. SubjectLab was built to give you that quality control with radical transparency: every point of your score is itemized, every deduction is explained, and every suggestion is concrete.</p>
+
+  <p class="mb-4">Most free tools hand you a single number and a shrug. A useful <strong>subject line checker</strong> should do more. It should tell you <em>why</em> your line scored 63 instead of 88, which words are costing you points, whether your call to action survives on a phone screen, and which of your A/B/C variants actually deserves the send. That is the philosophy behind the scoring engine on this page: ten separate components, each with its own maximum, summed to a 0–100 score you can audit line by line.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">Why subject lines fail: the three silent killers</h3>
+  <p class="mb-4">The first killer is length. Desktop inboxes show roughly sixty to seventy characters, but mobile inboxes cut you off far earlier — Gmail on a phone shows only about thirty-three characters. If your key promise or call to action sits at character forty-five, half your audience never sees it. The second killer is spam-trigger language. Words like "free", "buy now", "act now" and "limited time" are the exact phrases spam filters were trained on for two decades; they do not just hurt deliverability, they make human readers flinch. The third killer is formatting: ALL CAPS, triple exclamation marks and double question marks are the visual equivalent of shouting through a megaphone. Each of these is measurable, which means each can be tested before you send — and that is exactly what an <strong>email subject line tester</strong> is for.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">How the SubjectLab score is calculated</h3>
+  <p class="mb-4">The score has ten components. <strong>Length</strong> is worth twenty points, with the full twenty awarded in the 41–60 character sweet spot — long enough to say something real, short enough to survive truncation. <strong>Spam-trigger check</strong> is worth twenty-five: you start with all twenty-five and lose eight for every trigger word found, because nothing tanks a campaign faster than the spam folder. <strong>Power words</strong> add up to twelve points, four per word, rewarding language like "proven", "effortless" or "breakthrough" that signals concrete value. <strong>Curiosity hooks</strong> contribute up to ten points — words like "why", "how", "revealed" or "untold" open an information gap the reader wants to close. <strong>Urgency</strong> adds five points for a single well-placed cue like "today" or "ending soon", but the model deliberately caps it, because manufactured urgency is one step from spam. <strong>Personalization</strong> is worth eight points for a name merge tag or four for second-person "you" language. A <strong>number</strong> earns five points, an <strong>emoji</strong> earns five, clean <strong>casing and punctuation</strong> earn five, and framing the line as a <strong>question</strong> earns the final five. One hundred points, ten receipts. No black box.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">A/B/C testing: why one variant is never enough</h3>
+  <p class="mb-4">Professional email marketers never send a single subject line into the void. They test. The classic A/B test pits two variants against each other, but adding a third variant — a C — lets you test two different hypotheses at once: maybe variant B tests curiosity while variant C tests urgency, with A as your control. SubjectLab scores all three on the same rubric and shows you the delta between each variant and the winner, so you can see at a glance whether your runner-up is two points behind or twenty. A small delta means the choice is a toss-up and you should test another angle; a large delta means one variant is objectively stronger and you should send it with confidence. Over time, keeping a log of which variants win teaches you your audience's taste better than any generic best-practice list.</p>
+
+  <p class="mb-4">When you write variants, change only one element at a time if you can. "Your proven 7-step morning routine" versus "7 morning habits backed by science" tests specificity against curiosity. "Your proven 7-step morning routine" versus "Your proven 7-step morning routine — today only" tests urgency as an additive layer. If you change the length, the vocabulary and the structure all at once, you will never know what actually moved the needle. The itemized breakdown helps here: compare the two variants' component scores and you can see precisely which dimension improved.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">Truncation: designing for the smallest screen first</h3>
+  <p class="mb-4">Every client draws the line somewhere. Gmail on desktop gives you about seventy characters; on mobile, about thirty-three. Outlook desktop allows roughly sixty, mobile about thirty-eight. Apple Mail shows around sixty-two on desktop and about forty-one on an iPhone. These are the exact thresholds baked into the truncation previews on this page. The practical rule is simple: front-load. Put the most important words — the benefit, the number, the name — inside the first thirty characters, and treat everything after character forty as a bonus that desktop readers get and mobile readers may not. If your call to action is "ends tonight" and it sits at character fifty, rewrite so the urgency leads.</p>
+
+  <p class="mb-4">Truncation also interacts with personalization in a way people forget. A merge tag like {{first_name}} expands to different lengths for different recipients, which means a subject line that fits perfectly for "Al" truncates for "Alexandrina". When you use name tags, leave a buffer of at least ten characters. The same applies to emoji: most emoji render as two characters wide in some clients, so count conservatively.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">Spam words: what triggers filters and what to write instead</h3>
+  <p class="mb-4">A dedicated <strong>spam word checker</strong> matters because spam filtering happens in two stages. First, the algorithmic stage: filters score your message against known spam corpora, and classic trigger phrases add weight. Second, the human stage: readers have been trained by years of junk mail to distrust the same phrases, so even if you reach the inbox, "FREE!!!" gets deleted unread. The highlighter on this page marks every trigger it finds and suggests safer synonyms — "complimentary" instead of "free", "shop today" instead of "buy now", "worry-free" instead of "risk-free". The goal is not to trick filters; it is to write like a legitimate sender, because legitimate senders do not need to shout.</p>
+
+  <p class="mb-4">Be especially careful with combinations. A single mild trigger like "offer" is usually harmless; "FREE offer — act now!!!" stacks three triggers plus shouty formatting, which is exactly the pattern filters penalize most. The scoring model reflects this: each unique trigger costs eight points, so stacking them collapses your score fast. Also watch your industry's jargon. Financial terms like "loan", "refinance" and "pre-approved", health terms like "weight loss" and "diet pills", and sweepstakes terms like "winner" and "prize" are all heavily abused by spammers, so legitimate senders in those industries need to be extra deliberate with wording.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">Power, curiosity and urgency: the three word levers</h3>
+  <p class="mb-4">Beyond avoiding the negative, you can pull three positive levers. <strong>Power words</strong> promise concrete value: "proven", "effortless", "step-by-step", "done-for-you". They work because they reduce perceived effort and risk. <strong>Curiosity words</strong> open loops: "why", "how", "revealed", "untold", "what nobody tells you". They work because the human brain dislikes unfinished business. <strong>Urgency words</strong> add a deadline: "today", "ending soon", "last chance". They work because of loss aversion — but they are the easiest lever to overuse, which is why the scoring caps urgency at five points and the lexicon lab keeps the list short. The strongest subject lines usually pull exactly two of these three levers: curiosity plus a power word, or a power word plus gentle urgency. Pulling all three at once often reads as hype.</p>
+
+  <p class="mb-4">The lexicon lab on this page exists so you can experiment. Click any word to insert it into your active variant, re-run the analysis, and watch the component scores move. This tight feedback loop — write, score, tweak, re-score — is how you develop an instinct for the genre. After a few dozen iterations you will find yourself writing stronger first drafts, because you will have internalized which words earn their place.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">Numbers, questions, emoji and personalization</h3>
+  <p class="mb-4">Four smaller levers round out the model, each worth five to eight points. Numbers work because digits break the visual pattern of text and imply specificity — "7 steps" beats "several steps", and odd numbers tend to outperform round ones in tests. Questions work because they prompt a mental response; the reader answers in their head and is now engaged. A single emoji works because inboxes are walls of text and a small color accent draws the eye — but one is the limit, and it must be relevant, not decorative. Personalization works because the reader's own name, or even just the word "you", signals that the message was written for a person rather than a list. None of these is magic alone; together, they are the difference between a 62 and an 88.</p>
+
+  <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">A practical pre-send checklist</h3>
+  <p class="mb-4">Before any important send, run through this routine. First, draft three variants that each test a different angle. Second, run them through this <strong>subject line checker</strong> and read the itemized breakdown, not just the headline score. Third, scrub every flagged spam word using the suggested synonyms. Fourth, check the truncation previews and make sure the core promise is visible at thirty-three characters — the Gmail mobile cutoff. Fifth, confirm the winner's margin: if the delta between first and second place is tiny, consider a fourth variant rather than agonizing. Sixth, send a test to yourself and read it on your phone, in your actual inbox, next to real competing subject lines. A tool can measure the mechanics, but only your eyes can judge whether the line earns its place in a crowded inbox. Do this consistently and your open rates will compound, because every send becomes a small experiment with a recorded result.</p>
+
+  <p class="mb-4">SubjectLab is free and unlimited because good subject lines should not be gated behind a subscription. Paste your variants, study the breakdowns, steal the synonyms, and send with confidence. Your open rate will thank you.</p>
+</article>
+
+<!-- FAQs -->
+<section class="mx-auto max-w-3xl px-4 sm:px-6 pb-12">
+  <h2 class="text-2xl font-extrabold text-slate-900 mb-5">Frequently asked questions</h2>
+  <div class="space-y-3">
+    <details class="faq bg-white rounded-xl border border-slate-200 p-4">
+      <summary class="font-semibold cursor-pointer flex justify-between items-center">What does an email subject line tester actually measure? <span class="faq-plus text-indigo-600 text-xl leading-none">+</span></summary>
+      <p class="mt-2 text-sm text-slate-600">A good email subject line tester measures the mechanical factors that predict opens: length versus inbox truncation limits, spam-trigger words, power and curiosity vocabulary, personalization, numbers, emoji use, and formatting. SubjectLab scores ten such components and shows each one itemized, so you know exactly what to fix instead of guessing.</p>
+    </details>
+    <details class="faq bg-white rounded-xl border border-slate-200 p-4">
+      <summary class="font-semibold cursor-pointer flex justify-between items-center">How is SubjectLab different from other subject line checkers? <span class="faq-plus text-indigo-600 text-xl leading-none">+</span></summary>
+      <p class="mt-2 text-sm text-slate-600">Most subject line checkers return a single opaque score. SubjectLab compares up to three A/B/C variants with score deltas, shows exact truncation previews for Gmail, Outlook and Apple Mail on desktop and mobile, highlights spam words with safer synonyms, and breaks the score into ten transparent components. It is also completely free with no signup.</p>
+    </details>
+    <details class="faq bg-white rounded-xl border border-slate-200 p-4">
+      <summary class="font-semibold cursor-pointer flex justify-between items-center">What is the ideal email subject line length? <span class="faq-plus text-indigo-600 text-xl leading-none">+</span></summary>
+      <p class="mt-2 text-sm text-slate-600">Aim for 41–60 characters. That range survives desktop truncation in most clients while saying enough to be compelling. More importantly, front-load your key message into the first 33 characters, because that is all Gmail shows on mobile. Anything critical placed after character 40 may never be seen by phone readers.</p>
+    </details>
+    <details class="faq bg-white rounded-xl border border-slate-200 p-4">
+      <summary class="font-semibold cursor-pointer flex justify-between items-center">How does the spam word checker work? <span class="faq-plus text-indigo-600 text-xl leading-none">+</span></summary>
+      <p class="mt-2 text-sm text-slate-600">The built-in spam word checker scans your subject line against a baked-in list of 60+ phrases that spam filters and human readers associate with junk mail — words like "free", "buy now" and "act now". Each hit is highlighted in your text and paired with safer synonyms, and every unique trigger costs 8 points from the spam component of your score.</p>
+    </details>
+    <details class="faq bg-white rounded-xl border border-slate-200 p-4">
+      <summary class="font-semibold cursor-pointer flex justify-between items-center">Should I use urgency words like "last chance" in subject lines? <span class="faq-plus text-indigo-600 text-xl leading-none">+</span></summary>
+      <p class="mt-2 text-sm text-slate-600">Sparingly. Genuine urgency ("ends tonight" for a real deadline) lifts opens through loss aversion, but manufactured urgency trains readers to distrust you and edges toward spam-filter territory. SubjectLab awards up to 5 points for one urgency cue and its lexicon keeps the list deliberately short — use it when the deadline is real.</p>
+    </details>
+    <details class="faq bg-white rounded-xl border border-slate-200 p-4">
+      <summary class="font-semibold cursor-pointer flex justify-between items-center">Is SubjectLab really free with no signup? <span class="faq-plus text-indigo-600 text-xl leading-none">+</span></summary>
+      <p class="mt-2 text-sm text-slate-600">Yes. Unlimited free usage, no account, no paywall, no watermark. Everything runs in your browser — your subject lines are never uploaded anywhere, so you can safely test confidential campaign copy.</p>
+    </details>
+  </div>
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "What does an email subject line tester actually measure?", "acceptedAnswer": {"@type": "Answer", "text": "A good email subject line tester measures the mechanical factors that predict opens: length versus inbox truncation limits, spam-trigger words, power and curiosity vocabulary, personalization, numbers, emoji use, and formatting. SubjectLab scores ten such components and shows each one itemized."}},
+    {"@type": "Question", "name": "How is SubjectLab different from other subject line checkers?", "acceptedAnswer": {"@type": "Answer", "text": "Most subject line checkers return a single opaque score. SubjectLab compares up to three A/B/C variants with score deltas, shows exact truncation previews for Gmail, Outlook and Apple Mail on desktop and mobile, highlights spam words with safer synonyms, and breaks the score into ten transparent components."}},
+    {"@type": "Question", "name": "What is the ideal email subject line length?", "acceptedAnswer": {"@type": "Answer", "text": "Aim for 41–60 characters. Front-load your key message into the first 33 characters, because that is all Gmail shows on mobile."}},
+    {"@type": "Question", "name": "How does the spam word checker work?", "acceptedAnswer": {"@type": "Answer", "text": "The built-in spam word checker scans your subject line against a baked-in list of 60+ phrases associated with junk mail. Each hit is highlighted and paired with safer synonyms, and every unique trigger costs 8 points from the spam component of the score."}},
+    {"@type": "Question", "name": "Should I use urgency words like \"last chance\" in subject lines?", "acceptedAnswer": {"@type": "Answer", "text": "Sparingly. Genuine urgency lifts opens through loss aversion, but manufactured urgency trains readers to distrust you. SubjectLab awards up to 5 points for one urgency cue."}},
+    {"@type": "Question", "name": "Is SubjectLab really free with no signup?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Unlimited free usage, no account, no paywall, no watermark. Everything runs in your browser."}}
+  ]
+}
+</script>
+
+<script id="v3-subjectlab-subject-line-tester-lib">
+/* SubjectLab — pure subject-line scoring library. No DOM, no window, no document. */
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ---------------- Lexicons (baked in) ---------------- */
+
+var SPAM_WORDS = [
+  ['free', ['no-cost', 'complimentary', 'on the house']],
+  ['100% free', ['complimentary', 'included at no cost']],
+  ['buy now', ['shop today', 'see the collection']],
+  ['order now', ['order today', 'start your order']],
+  ['click here', ['learn more', 'see how']],
+  ['act now', ['get started today', 'take the first step']],
+  ['limited time', ['this week', 'for a short while']],
+  ['urgent', ['time-sensitive', 'needs your attention']],
+  ['guarantee', ['promise', 'our commitment']],
+  ['guaranteed', ['backed by us', 'risk-managed']],
+  ['no risk', ['worry-free', 'easy returns']],
+  ['risk free', ['worry-free', 'easy returns']],
+  ['risk-free', ['worry-free', 'easy returns']],
+  ['win', ['earn', 'gain']],
+  ['winner', ['selected reader', 'lucky member']],
+  ['prize', ['reward', 'bonus']],
+  ['cash', ['funds', 'payout']],
+  ['$$$', ['savings', 'earnings']],
+  ['double your', ['grow your', 'increase your']],
+  ['make money', ['grow income', 'build earnings']],
+  ['extra income', ['side earnings', 'added income']],
+  ['million dollars', ['big savings', 'major rewards']],
+  ['work from home', ['remote work', 'work remotely']],
+  ['no cost', ['included', 'on us']],
+  ['cheap', ['affordable', 'budget-friendly']],
+  ['discount', ['savings', 'price drop']],
+  ['sale', ['offer', 'event']],
+  ['clearance', ['final reductions', 'last pieces']],
+  ['call now', ['call today', 'talk to us']],
+  ['apply now', ['apply today', 'start your application']],
+  ['once in a lifetime', ['rare opportunity', 'special occasion']],
+  ['amazing', ['impressive', 'notable']],
+  ['incredible', ['remarkable', 'worth seeing']],
+  ['miracle', ['breakthrough', 'turnaround']],
+  ['no obligation', ['no strings attached', 'cancel anytime']],
+  ['viagra', ['prescription meds', 'treatment']],
+  ['cialis', ['prescription meds', 'treatment']],
+  ['pharmacy', ['licensed provider', 'clinic']],
+  ['weight loss', ['healthy habits', 'fitness goals']],
+  ['lose weight', ['get fit', 'build healthy habits']],
+  ['diet pills', ['nutrition plan', 'wellness program']],
+  ['financial freedom', ['financial goals', 'money confidence']],
+  ['be your own boss', ['lead your team', 'run your schedule']],
+  ['pre-approved', ['pre-qualified', 'eligible']],
+  ['no credit check', ['soft credit check', 'no hard inquiry']],
+  ['bad credit', ['credit challenges', 'rebuilding credit']],
+  ['save big', ['save more', 'cut costs']],
+  ['best price', ['great value', 'fair pricing']],
+  ['low price', ['fair price', 'honest pricing']],
+  ['bargain', ['deal', 'steal']],
+  ['why pay more', ['compare and save', 'see the difference']],
+  ['dear friend', ['hello there', 'hi']],
+  ['congratulations', ['well done', 'nice work']],
+  ["you've been selected", ["you're invited", 'you made the list']],
+  ['claim', ['redeem', 'collect']],
+  ['gift', ['bonus', 'thank-you']],
+  ['opportunity', ['opening', 'chance']],
+  ['credit card', ['payment card', 'card']],
+  ['refinance', ['restructure', 'review your rate']],
+  ['insurance', ['coverage', 'protection plan']],
+  ['loan', ['financing', 'funding']],
+  ['debt', ['balance', 'what you owe']],
+  ['mortgage', ['home loan', 'housing payment']]
+];
+
+var POWER_WORDS = [
+  'proven', 'ultimate', 'essential', 'powerful', 'exclusive', 'breakthrough',
+  'simple', 'easy', 'quick', 'fast', 'new', 'improved', 'smart', 'brilliant',
+  'remarkable', 'extraordinary', 'innovative', 'revolutionary', 'cutting-edge',
+  'advanced', 'premium', 'luxury', 'elegant', 'beautiful', 'stunning',
+  'irresistible', 'compelling', 'effective', 'efficient', 'effortless',
+  'seamless', 'instant', 'immediate', 'personal', 'custom', 'tailored',
+  'handpicked', 'curated', 'boost', 'transform', 'unlock', 'discover',
+  'master', 'thrive', 'succeed', 'secret weapon', 'game changer', 'step-by-step',
+  'done-for-you', 'backed by data'
+];
+
+var CURIOSITY_WORDS = [
+  'why', 'how', 'what', 'which', 'when', 'who',
+  'revealed', 'uncovered', 'untold', 'surprising', 'unexpected', 'strange',
+  'curious', 'mystery', 'mysterious', 'imagine', 'ever wondered',
+  'truth', 'myth', 'myths', 'busted', 'exposed', 'confession', 'confessions',
+  'diary', 'sneak peek', 'inside look', 'nobody tells you', 'did you know',
+  'behind the scenes'
+];
+
+var URGENCY_WORDS = [
+  'now', 'today', 'hurry', 'last chance', 'ending soon', 'expires',
+  'deadline', "don't miss", "before it's gone", 'final hours', 'act fast',
+  'limited spots', 'closing soon', 'tomorrow', 'ends tonight', 'almost gone',
+  'running out', "time's up", 'immediate', 'last call', 'final call',
+  'countdown', 'only hours left', 'this week only'
+];
+
+var TRUNCATION_RULES = [
+  { client: 'Gmail',   device: 'Desktop', chars: 70 },
+  { client: 'Gmail',   device: 'Mobile',  chars: 33 },
+  { client: 'Outlook', device: 'Desktop', chars: 60 },
+  { client: 'Outlook', device: 'Mobile',  chars: 38 },
+  { client: 'Apple Mail', device: 'Desktop', chars: 62 },
+  { client: 'Apple Mail', device: 'Mobile',  chars: 41 }
+];
+
+function getSpamWords() { return SPAM_WORDS.map(function (e) { return { word: e[0], synonyms: e[1].slice() }; }); }
+function getPowerWords() { return POWER_WORDS.slice(); }
+function getCuriosityWords() { return CURIOSITY_WORDS.slice(); }
+function getUrgencyWords() { return URGENCY_WORDS.slice(); }
+function getTruncationRules() { return TRUNCATION_RULES.map(function (r) { return { client: r.client, device: r.device, chars: r.chars }; }); }
+
+function findHits(subject, list) {
+  var lower = ' ' + subject.toLowerCase() + ' ';
+  var hits = [];
+  var sorted = list.slice().sort(function (a, b) { return b.length - a.length; });
+  sorted.forEach(function (w) {
+    var re = new RegExp('(^|\\W)' + escapeRegExp(w.toLowerCase()) + '(\\W|$)', 'i');
+    if (re.test(subject) && hits.indexOf(w) === -1) hits.push(w);
+  });
+  return hits;
+}
+
+function charCount(subject) {
+  return subject.trim().length;
+}
+
+function lengthScore(n) {
+  if (n === 0) return { points: 0, detail: 'Empty subject — write something to score.' };
+  if (n >= 41 && n <= 60) return { points: 20, detail: n + ' chars — ideal inbox sweet spot (41–60).' };
+  if ((n >= 31 && n <= 40) || (n >= 61 && n <= 70)) return { points: 15, detail: n + ' chars — good, slightly off the ideal range.' };
+  if ((n >= 21 && n <= 30) || (n >= 71 && n <= 80)) return { points: 10, detail: n + ' chars — a bit short or long; aim for 41–60.' };
+  if ((n >= 11 && n <= 20) || (n >= 81 && n <= 100)) return { points: 6, detail: n + ' chars — under-utilized or likely to truncate.' };
+  if ((n >= 1 && n <= 10) || (n >= 101 && n <= 140)) return { points: 3, detail: n + ' chars — too short to inform, or will truncate hard.' };
+  return { points: 1, detail: n + ' chars — far too long; most of it will never be seen.' };
+}
+
+function spamScore(hits) {
+  var pts = Math.max(0, 25 - hits.length * 8);
+  var detail = hits.length === 0
+    ? 'No spam-trigger words detected.'
+    : hits.length + ' spam trigger(s): ' + hits.join(', ') + ' (−8 each).';
+  return { points: pts, detail: detail };
+}
+
+function powerScore(hits) {
+  var pts = Math.min(12, hits.length * 4);
+  var detail = hits.length === 0
+    ? 'No power words — add one like "proven" or "effortless".'
+    : hits.length + ' power word(s): ' + hits.join(', ') + ' (+4 each, max 12).';
+  return { points: pts, detail: detail };
+}
+
+function curiosityScore(hits) {
+  var pts = Math.min(10, hits.length * 5);
+  var detail = hits.length === 0
+    ? 'No curiosity hooks — a "why" or "how" can lift opens.'
+    : hits.length + ' curiosity hook(s): ' + hits.join(', ') + ' (+5 each, max 10).';
+  return { points: pts, detail: detail };
+}
+
+function urgencyScore(hits) {
+  var pts = hits.length > 0 ? 5 : 0;
+  var detail = hits.length === 0
+    ? 'No urgency cue.'
+    : 'Urgency cue: ' + hits.join(', ') + ' (+5). Use sparingly.';
+  return { points: pts, detail: detail };
+}
+
+function personalizationScore(subject) {
+  if (/\{[^}]*name[^}]*\}|\[name\]/i.test(subject))
+    return { points: 8, detail: 'Name merge tag detected — strong personalization (+8).' };
+  if (/\byou\b|\byour\b/i.test(subject))
+    return { points: 4, detail: 'Second-person wording ("you"/"your") adds relevance (+4).' };
+  return { points: 0, detail: 'No personalization — "you" or a name tag helps.' };
+}
+
+function numberScore(subject) {
+  var pts = /\d/.test(subject) ? 5 : 0;
+  return { points: pts, detail: pts ? 'Contains a number — digits catch the eye (+5).' : 'No number — odd numbers like 7 or 21 test well.' };
+}
+
+function emojiScore(subject) {
+  var re = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
+  var pts = re.test(subject) ? 5 : 0;
+  return { points: pts, detail: pts ? 'One emoji detected — tasteful use stands out (+5).' : 'No emoji — one relevant emoji can lift opens.' };
+}
+
+function caseScore(subject) {
+  var n = subject.trim().length;
+  if (n === 0) return { points: 0, detail: 'Empty subject.' };
+  var letters = subject.replace(/[^A-Za-z]/g, '');
+  var upper = subject.replace(/[^A-Z]/g, '');
+  var exclaims = (subject.match(/!/g) || []).length;
+  var isShouty = letters.length > 5 && upper.length / letters.length > 0.7;
+  if (isShouty || exclaims > 2 || /\?\?/.test(subject)) {
+    var reasons = [];
+    if (isShouty) reasons.push('ALL CAPS reads as shouting');
+    if (exclaims > 2) reasons.push(exclaims + ' exclamation marks');
+    if (/\?\?/.test(subject)) reasons.push('double question marks');
+    return { points: 0, detail: 'Spammy formatting: ' + reasons.join('; ') + ' (−5).' };
+  }
+  return { points: 5, detail: 'Clean casing and punctuation (+5).' };
+}
+
+function questionScore(subject) {
+  var pts = /\?/.test(subject) ? 5 : 0;
+  return { points: pts, detail: pts ? 'Poses a question — invites a mental reply (+5).' : 'Not a question — questions can raise curiosity.' };
+}
+
+function gradeFor(score) {
+  if (score >= 90) return 'A+';
+  if (score >= 85) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 55) return 'C';
+  if (score >= 40) return 'D';
+  return 'F';
+}
+
+function analyzeSubject(raw) {
+  var subject = String(raw == null ? '' : raw);
+  var trimmed = subject.trim();
+  if (trimmed.length === 0) {
+    return {
+      subject: subject,
+      score: 0,
+      grade: 'F',
+      breakdown: [],
+      spamHits: [],
+      powerHits: [],
+      curiosityHits: [],
+      urgencyHits: [],
+      guidance: [
+        'Enter a subject line to get a score.',
+        'Aim for 41–60 characters so it survives truncation.',
+        'Avoid spam triggers like FREE, "buy now" or "!!!".'
+      ]
+    };
+  }
+
+  var spamHits = findHits(subject, SPAM_WORDS.map(function (e) { return e[0]; }));
+  var powerHits = findHits(subject, POWER_WORDS);
+  var curiosityHits = findHits(subject, CURIOSITY_WORDS);
+  var urgencyHits = findHits(subject, URGENCY_WORDS);
+
+  var len = lengthScore(trimmed.length);
+  var spm = spamScore(spamHits);
+  var pwr = powerScore(powerHits);
+  var cur = curiosityScore(curiosityHits);
+  var urg = urgencyScore(urgencyHits);
+  var per = personalizationScore(subject);
+  var num = numberScore(subject);
+  var emo = emojiScore(subject);
+  var cas = caseScore(subject);
+  var que = questionScore(subject);
+
+  var breakdown = [
+    { label: 'Length (41–60 sweet spot)', points: len.points, max: 20, detail: len.detail },
+    { label: 'Spam-trigger check', points: spm.points, max: 25, detail: spm.detail },
+    { label: 'Power words', points: pwr.points, max: 12, detail: pwr.detail },
+    { label: 'Curiosity hooks', points: cur.points, max: 10, detail: cur.detail },
+    { label: 'Urgency cue', points: urg.points, max: 5, detail: urg.detail },
+    { label: 'Personalization', points: per.points, max: 8, detail: per.detail },
+    { label: 'Number present', points: num.points, max: 5, detail: num.detail },
+    { label: 'Emoji', points: emo.points, max: 5, detail: emo.detail },
+    { label: 'Casing & punctuation', points: cas.points, max: 5, detail: cas.detail },
+    { label: 'Question format', points: que.points, max: 5, detail: que.detail }
+  ];
+
+  var total = breakdown.reduce(function (a, b) { return a + b.points; }, 0);
+  total = Math.max(0, Math.min(100, total));
+
+  return {
+    subject: subject,
+    score: total,
+    grade: gradeFor(total),
+    breakdown: breakdown,
+    spamHits: spamHits,
+    powerHits: powerHits,
+    curiosityHits: curiosityHits,
+    urgencyHits: urgencyHits,
+    guidance: []
+  };
+}
+
+/* Truncation previews: exact per-client character limits. */
+function truncateSubject(subject, maxChars) {
+  var s = String(subject);
+  if (s.length <= maxChars) return { visible: s, cut: false, hidden: 0 };
+  return { visible: s.slice(0, maxChars), cut: true, hidden: s.length - maxChars };
+}
+
+function previewTruncations(subject) {
+  return TRUNCATION_RULES.map(function (r) {
+    var t = truncateSubject(String(subject), r.chars);
+    return { client: r.client, device: r.device, chars: r.chars, visible: t.visible, cut: t.cut, hidden: t.hidden };
+  });
+}
+
+/* Highlight spam words in HTML-safe output. */
+function highlightSpam(subject) {
+  var words = SPAM_WORDS.map(function (e) { return e[0]; })
+    .sort(function (a, b) { return b.length - a.length; });
+  var pattern = words.map(escapeRegExp).join('|');
+  var re = new RegExp('(^|\\W)(' + pattern + ')(?=\\W|$)', 'gi');
+  var safe = escapeHtml(String(subject));
+  /* Re-escape-aware replace on the raw string, then escape: simpler to replace on raw and escape the rest */
+  var parts = [];
+  var last = 0;
+  var raw = String(subject);
+  var m;
+  var re2 = new RegExp('(^|\\W)(' + pattern + ')(?=\\W|$)', 'gi');
+  while ((m = re2.exec(raw)) !== null) {
+    parts.push(escapeHtml(raw.slice(last, m.index + m[1].length)));
+    parts.push('<mark class="spam-hit">' + escapeHtml(m[2]) + '</mark>');
+    last = m.index + m[1].length + m[2].length;
+  }
+  parts.push(escapeHtml(raw.slice(last)));
+  return parts.join('');
+}
+
+function synonymsFor(word) {
+  var lower = String(word).toLowerCase();
+  for (var i = 0; i < SPAM_WORDS.length; i++) {
+    if (SPAM_WORDS[i][0].toLowerCase() === lower) return SPAM_WORDS[i][1].slice();
+  }
+  return [];
+}
+
+/* Score up to 3 variants, rank best-first, attach deltas vs the winner. */
+function rankVariants(variants) {
+  var list = variants.map(function (v, i) {
+    return { index: i, subject: String(v == null ? '' : v), analysis: analyzeSubject(v) };
+  });
+  var sorted = list.slice().sort(function (a, b) { return b.analysis.score - a.analysis.score; });
+  var best = sorted.length ? sorted[0].analysis.score : 0;
+  sorted.forEach(function (item) {
+    item.delta = item.analysis.score - best;
+    item.isWinner = item.analysis.score === best && item.analysis.subject.trim().length > 0;
+  });
+  return sorted;
+}
+
+/* Export for both Node tests and browser inlining. */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    analyzeSubject: analyzeSubject,
+    rankVariants: rankVariants,
+    truncateSubject: truncateSubject,
+    previewTruncations: previewTruncations,
+    highlightSpam: highlightSpam,
+    synonymsFor: synonymsFor,
+    gradeFor: gradeFor,
+    getSpamWords: getSpamWords,
+    getPowerWords: getPowerWords,
+    getCuriosityWords: getCuriosityWords,
+    getUrgencyWords: getUrgencyWords,
+    getTruncationRules: getTruncationRules,
+    escapeHtml: escapeHtml,
+    SPAM_WORDS: SPAM_WORDS,
+    POWER_WORDS: POWER_WORDS,
+    CURIOSITY_WORDS: CURIOSITY_WORDS,
+    URGENCY_WORDS: URGENCY_WORDS
+  };
+}
+
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var activeSlot = 'variant-a';
+  var VARIANTS = ['variant-a', 'variant-b', 'variant-c'];
+  var LABELS = { 'variant-a': 'A', 'variant-b': 'B', 'variant-c': 'C' };
+  var SLOT_COLORS = { 'variant-a': 'indigo', 'variant-b': 'pink', 'variant-c': 'slate' };
+
+  function esc(s) { return escapeHtml(String(s)); }
+
+  VARIANTS.forEach(function (id) {
+    var ta = document.getElementById(id);
+    ta.addEventListener('input', function () {
+      document.getElementById('count-' + id.split('-')[1]).textContent = ta.value.length;
+    });
+  });
+
+  document.querySelectorAll('.insert-here').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      activeSlot = btn.getAttribute('data-insert-target');
+      document.getElementById('active-slot').textContent = activeSlot;
+      document.querySelectorAll('.insert-here').forEach(function (b) {
+        b.classList.remove('text-indigo-800', 'font-extrabold');
+      });
+      btn.classList.add('text-indigo-800', 'font-extrabold');
+      document.getElementById(activeSlot).focus();
+    });
+  });
+
+  function renderLexicon(kind) {
+    var box = document.getElementById('lexicon-chips');
+    var words = kind === 'power' ? getPowerWords() : kind === 'curiosity' ? getCuriosityWords() : getUrgencyWords();
+    var color = kind === 'power' ? 'indigo' : kind === 'curiosity' ? 'pink' : 'amber';
+    box.innerHTML = words.map(function (w) {
+      return '<button class="chip lex-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-' + color + '-50 text-' + color + '-700 border border-' + color + '-200 hover:bg-' + color + '-100" data-word="' + esc(w) + '">' + esc(w) + ' +</button>';
+    }).join('');
+    box.querySelectorAll('.lex-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var ta = document.getElementById(activeSlot);
+        var word = chip.getAttribute('data-word');
+        var sep = ta.value && !/\s$/.test(ta.value) ? ' ' : '';
+        ta.value = ta.value + sep + word;
+        ta.dispatchEvent(new Event('input'));
+        ta.focus();
+      });
+    });
+  }
+
+  document.querySelectorAll('.lex-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.lex-tab').forEach(function (t) {
+        t.classList.remove('bg-indigo-600', 'text-white');
+        t.classList.add('bg-slate-100', 'text-slate-600');
+      });
+      tab.classList.add('bg-indigo-600', 'text-white');
+      tab.classList.remove('bg-slate-100', 'text-slate-600');
+      renderLexicon(tab.getAttribute('data-lex'));
+    });
+  });
+  renderLexicon('power');
+
+  /* Truncation reference cards */
+  document.getElementById('trunc-rules').innerHTML = getTruncationRules().map(function (r) {
+    return '<div class="bg-white rounded-xl border border-slate-200 p-3"><div class="font-bold">' + esc(r.client) + '</div><div class="text-slate-500">' + esc(r.device) + ' — ' + r.chars + ' chars</div></div>';
+  }).join('');
+
+  function ringSVG(score, size) {
+    var r = (size - 10) / 2, c = 2 * Math.PI * r;
+    var col = score >= 85 ? '#4f46e5' : score >= 70 ? '#0d9488' : score >= 55 ? '#d97706' : '#e11d48';
+    return '<svg class="score-ring" width="' + size + '" height="' + size + '">' +
+      '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" stroke="#e2e8f0" stroke-width="8" fill="none"/>' +
+      '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" stroke="' + col + '" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' + (c * (1 - score / 100)) + '"/>' +
+      '<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-size="' + (size / 3.4) + '" font-weight="800" fill="#0f172a" transform="rotate(90 ' + size / 2 + ' ' + size / 2 + ')">' + score + '</text></svg>';
+  }
+
+  function renderVariant(item) {
+    var a = item.analysis;
+    var id = VARIANTS[item.index];
+    var label = LABELS[id];
+    var winnerBadge = item.isWinner
+      ? '<span class="ml-2 inline-flex items-center text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-pink-500 px-2.5 py-1 rounded-full">🏆 Winner</span>'
+      : '';
+    var deltaBadge = item.delta === 0
+      ? '<span class="text-xs font-bold text-emerald-600">±0 — best</span>'
+      : '<span class="text-xs font-bold text-rose-500">' + item.delta + ' behind winner</span>';
+    var color = SLOT_COLORS[id];
+
+    var head;
+    if (a.subject.trim().length === 0) {
+      head = '<p class="text-sm text-slate-400 italic">Empty — type a subject in slot ' + label + ' and analyze.</p>';
+    } else {
+      head = '<p class="text-lg font-semibold text-slate-900 break-words">“' + highlightSpam(a.subject) + '”</p>';
+    }
+
+    var breakdown = a.breakdown.map(function (b) {
+      var pct = Math.round(b.points / b.max * 100);
+      var bar = b.points === b.max ? 'bg-emerald-500' : pct >= 60 ? 'bg-indigo-500' : pct >= 30 ? 'bg-amber-500' : 'bg-rose-500';
+      return '<div class="py-2 border-b border-slate-100 last:border-0">' +
+        '<div class="flex justify-between text-sm"><span class="font-semibold">' + esc(b.label) + '</span>' +
+        '<span class="font-mono font-bold">' + b.points + '<span class="text-slate-400">/' + b.max + '</span></span></div>' +
+        '<div class="h-1.5 bg-slate-100 rounded-full mt-1.5"><div class="h-1.5 rounded-full ' + bar + '" style="width:' + pct + '%"></div></div>' +
+        '<p class="text-xs text-slate-500 mt-1">' + esc(b.detail) + '</p></div>';
+    }).join('');
+
+    var spamBox;
+    if (a.spamHits.length === 0 && a.subject.trim().length > 0) {
+      spamBox = '<p class="text-sm text-emerald-600 font-semibold">✓ No spam-trigger words found.</p>';
+    } else if (a.spamHits.length > 0) {
+      spamBox = a.spamHits.map(function (w) {
+        var syns = synonymsFor(w);
+        var chips = syns.map(function (s) {
+          return '<button class="chip syn-chip px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-200" data-syn="' + esc(s) + '" data-slot="' + id + '" data-word="' + esc(w) + '">⇄ ' + esc(s) + '</button>';
+        }).join(' ');
+        return '<div class="mb-2"><span class="inline-block px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-xs font-bold mr-2">⚠ ' + esc(w) + '</span>' + chips + '</div>';
+      }).join('');
+    } else { spamBox = ''; }
+
+    var truncs = previewTruncations(a.subject).map(function (t) {
+      var total = Math.max(a.subject.length, 1);
+      var visPct = Math.min(100, Math.round(t.visible.length / total * 100));
+      return '<div class="mb-2.5"><div class="flex justify-between text-xs mb-1"><span class="font-semibold">' + esc(t.client) + ' · ' + esc(t.device) + ' <span class="text-slate-400">(' + t.chars + ')</span></span>' +
+        (t.cut ? '<span class="text-rose-500 font-bold">cuts ' + t.hidden + ' chars</span>' : '<span class="text-emerald-600 font-bold">fits ✓</span>') + '</div>' +
+        '<div class="trunc-bar bg-slate-100 w-full"><div class="trunc-bar ' + (t.cut ? 'bg-gradient-to-r from-amber-400 to-rose-400' : 'bg-gradient-to-r from-indigo-500 to-pink-500') + '" style="width:' + visPct + '%"></div></div>' +
+        '<p class="text-xs text-slate-500 mt-1 font-mono break-words">“' + esc(t.visible) + (t.cut ? '…' : '') + '”</p></div>';
+    }).join('');
+
+    var guidance = (a.guidance || []).map(function (g) {
+      return '<li class="text-sm text-slate-600">💡 ' + esc(g) + '</li>';
+    }).join('');
+
+    return '<div class="bg-white rounded-2xl border-2 border-' + color + '-200 shadow-sm p-5 sm:p-6">' +
+      '<div class="flex flex-wrap items-center gap-4">' +
+        '<div class="flex items-center gap-4">' + ringSVG(a.score, 84) +
+          '<div><div class="text-2xl font-extrabold">Variant ' + label + winnerBadge + '</div>' +
+          '<div class="text-sm text-slate-500">Grade <span class="font-extrabold text-slate-800">' + a.grade + '</span> · ' + deltaBadge + '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mt-4">' + head + '</div>' +
+      (guidance ? '<ul class="mt-3 space-y-1">' + guidance + '</ul>' : '') +
+      (a.breakdown.length ? '<div class="mt-4"><h4 class="font-bold text-sm mb-1 text-slate-800">📊 Itemized score breakdown</h4>' + breakdown + '</div>' : '') +
+      (spamBox ? '<div class="mt-4"><h4 class="font-bold text-sm mb-2 text-slate-800">🚨 Spam-word check</h4>' + spamBox + '</div>' : '') +
+      (a.subject.trim().length ? '<div class="mt-4"><h4 class="font-bold text-sm mb-2 text-slate-800">✂️ Truncation previews</h4>' + truncs + '</div>' : '') +
+    '</div>';
+  }
+
+  document.getElementById('analyze-btn').addEventListener('click', function () {
+    var vals = VARIANTS.map(function (id) { return document.getElementById(id).value; });
+    var ranked = rankVariants(vals);
+    var box = document.getElementById('ranked-list');
+    box.innerHTML = ranked.map(renderVariant).join('');
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    box.querySelectorAll('.syn-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var ta = document.getElementById(chip.getAttribute('data-slot'));
+        var word = chip.getAttribute('data-word');
+        var syn = chip.getAttribute('data-syn');
+        var re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        ta.value = ta.value.replace(re, syn);
+        ta.dispatchEvent(new Event('input'));
+        document.getElementById('analyze-btn').click();
+      });
+    });
+  });
+
+  document.getElementById('sample-btn').addEventListener('click', function () {
+    document.getElementById('variant-a').value = 'FREE!!! Buy now — limited time offer!!!';
+    document.getElementById('variant-b').value = 'Your proven 7-step morning routine — what nobody tells you';
+    document.getElementById('variant-c').value = 'Quick question about your inbox';
+    VARIANTS.forEach(function (id) {
+      document.getElementById(id).dispatchEvent(new Event('input'));
+    });
+    document.getElementById('analyze-btn').click();
+  });
+})();
+</script>
+</body>
+</html>
